@@ -8,12 +8,18 @@
 % Current Version by Emily T. Griffiths, 2020-2025, modified as a function
 % to work within DUNA.
 %
-% Version (c) 2025
+% Version updated in 2025 to formally integrate BSH quality functions, Q1, Q5, and Q13 so
+% that they are not preformed as an extra step, but rather are collected to
+% examine if needed.  Only Q1 triggers an error, as that indicates that the
+% file is not readable and should not be processed. A warning is given so
+% the user can double check if need be, and the Q error is logged.
+%
+% Version (c) June 2025b
 %
 % Originally Developed by Jakob Tougaard and Pernille Meyer Sørensen, 2018. 
 % Modified and improved by Line Hermannsen and Mia L. K. Nielsen, 2018-2020.
 
-function [outputLocation, results, resultname] = decidecadeProcessing(depData)
+function [outputLocation, results, resultname, QualityResults] = decidecadeProcessing(depData)
     
     
     %File name
@@ -24,24 +30,16 @@ function [outputLocation, results, resultname] = decidecadeProcessing(depData)
 
     filesdata=depData.usableFiles;
 
-    % Get the median duration of the files in the directory. 
-    % Extract the seconds per sample information for this deployment.  This
-    % will be a consistent number based on the sample rate. without QR
-    % dur=cell(size(filesdata,1),1);
-    % for f = 1:height(filesdata)-1
-    %     wav=audioinfo(strcat(string(filesdata.folder(f)) ,'\', string(filesdata.name(f))));
-    %     inSec=extractBefore(char(seconds(wav.Duration)),' ');
-    %     [dur{f}]=inSec;
-    % end
-
-    % duration=str2double(dur);
-
-    %Index the files that are less than 1% in length from the median duration.
-    %Remove them from analysis. These files can be reported at the end of this
-    % %script. Without QR
-    % Linx=(duration > duration*0.01);
-    % filesdata=filesdata(Linx,:);
-    % Nfiles=height(filesdata);
+    %% initialize variables - Numbers are leftover from BSH original code.
+    Q_01(1:height(filesdata)) = NaN; % cannot read file
+    Q_05(1:2,1:height(filesdata)) = NaN; % too much clipping
+    Q_13(1:height(filesdata)) = NaN; % check if data is stationary
+    sr(1:height(filesdata))=NaN;
+    duration(1:height(filesdata))=NaN;
+    ts(1:height(filesdata))=NaN;
+    stdrms(1:height(filesdata))=NaN;
+    meanv(1:height(filesdata))=NaN;
+    meanvDC(1:height(filesdata))=NaN;
 
     
     
@@ -86,8 +84,28 @@ function [outputLocation, results, resultname] = decidecadeProcessing(depData)
         pause(5)
         tic
         display([char(filesdata.name(fileno)) ' file ' num2str(fileno) ' of ' num2str(height(filesdata)) ' total']) % Displays the filenumber that is be processed
-        [sig,sr] = audioread([depData.dataPath '\' char(filesdata.name(fileno))],'native') ;      % Reads the file, output: signal (sig) and sample rate (sr).
-        sig=double(sig)/2^15;
+        
+        [Q_01(fileno),sig,sr(fileno),duration(fileno),ts(fileno),stdrms(fileno),meanv(fileno),meanvDC(fileno)]=Q01([depData.dataPath '\' char(filesdata.name(fileno))]);
+        
+        if Q_01(fileno)==1
+        %% Fill in blanks if file can not be read
+            Q_05(:,fileno) = NaN;
+            Q_13(fileno) = NaN;
+            warning(['File ' char(filesdata.name(fileno)) ', index ' num2str(fileno) ', is not readable and has been skipped.'])
+            continue
+        else
+            %% QC_05: Check if more than the limit of the data are clipped, from app.Maxofclippeddata.
+            Q_05(:,kk)=Q05(fileLoc,data,lim);
+                        
+            %% QC_13: Check if data is stationary
+            Q_13(kk) = Q13(data,sr(kk),120); % 120 can be made variable, but for now we are standardizing it.
+        end
+
+        if seconds(duration(fileno)) < seconds(5)
+            warning(['File ' char(filesdata.name(fileno)) ', index ' num2str(fileno) ', is less than 5 seconds long and therefore has been skipped.'])
+            continue
+        end
+                   
         sig1 = sig - mean(sig);                         % Removes DC offset - doesn't make that big of a difference
         samples = length(sig1);                         % The no. of samples per file
         n_segments = floor(samples/sr);                 % Number of 1 second segments (e.g.  57600000 samples / 32000 samples/sec = 1800 1 sec segments (1800 / 60 sec = 30 minutes)
@@ -184,7 +202,8 @@ function [outputLocation, results, resultname] = decidecadeProcessing(depData)
 
         %  only if qR is in
         t1 = datetime(filesdata.clockDriftDate(fileno));
-        durSec=seconds(depData.QualityResults.duration(fileno));
+        durSec=seconds(duration(fileno));
+       
         
         % Timestamps for each 1 sec bin.
         timestamps_1s=t1:seconds(1):t1+durSec;
@@ -234,7 +253,17 @@ function [outputLocation, results, resultname] = decidecadeProcessing(depData)
         datafiles(fileno).posclipped=clipped_1s(:,2);   % Saves results of clipping test; negative clipping
         toc
     end
-        
+    
+    QualityResults.Q_Readable=Q_01;
+    QualityResults.Q_Clipping=Q_05;
+    QualityResults.Q_Stationary=Q_13;
+    QualityResults.duration=duration;
+    QualityResults.samprate=ts;
+    QualityResults.stdrms=stdrms;
+    QualityResults.meanv=meanv;
+    QualityResults.meanvDC=meanvDC;
+    QualityResults.filesdata=filesdata;
+
     results.datafiles = datafiles;
     save(resultname, 'results', '-v7.3')
     
