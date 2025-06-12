@@ -85,8 +85,8 @@ function [outputLocation, results, resultname, QualityResults] = decidecadeProce
         tic
         display([char(filesdata.name(fileno)) ' file ' num2str(fileno) ' of ' num2str(height(filesdata)) ' total']) % Displays the filenumber that is be processed
         
-        [Q_01(fileno),sig,sr(fileno),duration(fileno),ts(fileno),stdrms(fileno),meanv(fileno),meanvDC(fileno)]=Q01([depData.dataPath '\' char(filesdata.name(fileno))]);
-        
+        [Q_01(fileno),sig,sampR(fileno),duration(fileno),ts(fileno),stdrms(fileno),meanv(fileno),meanvDC(fileno)]=Q01([depData.dataPath '\' char(filesdata.name(fileno))]);
+        sr=sampR(fileno);
         if Q_01(fileno)==1
         %% Fill in blanks if file can not be read
             Q_05(:,fileno) = NaN;
@@ -95,10 +95,10 @@ function [outputLocation, results, resultname, QualityResults] = decidecadeProce
             continue
         else
             %% QC_05: Check if more than the limit of the data are clipped, from app.Maxofclippeddata.
-            Q_05(:,kk)=Q05([depData.dataPath '\' char(filesdata.name(fileno))],data,0.01);  %Clip limit set for 1%
+            Q_05(:,fileno)=Q05([depData.dataPath '\' char(filesdata.name(fileno))],sig,0.01);  %Clip limit set for 1%
                         
             %% QC_13: Check if data is stationary
-            Q_13(kk) = Q13(data,sr(kk),120); % 120 can be made variable, but for now we are standardizing it.
+            Q_13(fileno) = Q13(sig,sr,120); % 120 can be made variable, but for now we are standardizing it.
         end
 
         if seconds(duration(fileno)) < seconds(5)
