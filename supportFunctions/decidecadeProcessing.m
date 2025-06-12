@@ -95,7 +95,7 @@ function [outputLocation, results, resultname, QualityResults] = decidecadeProce
             continue
         else
             %% QC_05: Check if more than the limit of the data are clipped, from app.Maxofclippeddata.
-            Q_05(:,kk)=Q05(fileLoc,data,lim);
+            Q_05(:,kk)=Q05([depData.dataPath '\' char(filesdata.name(fileno))],data,0.01);  %Clip limit set for 1%
                         
             %% QC_13: Check if data is stationary
             Q_13(kk) = Q13(data,sr(kk),120); % 120 can be made variable, but for now we are standardizing it.
