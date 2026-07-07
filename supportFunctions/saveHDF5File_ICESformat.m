@@ -95,7 +95,7 @@ dDT=datetime(table2array(DaTi), 'InputFormat','yyyy-MMM-dd HH:mm:ss');
 
 %% Format by Date
         mons=unique(dDT.Month);
-        for m = 3:length(mons)
+        for m = 1:length(mons)
             S=(dDT.Month==mons(m));        
             LMOC_byMo=table2array(LeqMeasurementsOfChannel1(S,:));
             DT_byMo=dDT(S,:);
