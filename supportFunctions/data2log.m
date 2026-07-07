@@ -6,7 +6,7 @@
 % Other Developers:
 %   Pernille Meyer Sørensen, 2018. 
 %   Line Hermannsen, 2019-2020.
-%   Mia L. K. Nielsen, 2018-2029.
+%   Mia L. K. Nielsen, 2018-2019.
 
 
 

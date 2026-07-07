@@ -32,8 +32,8 @@
 % Update 27/10/2022, ETG, fixed bug if datetime information is missing in
 % the array.
 %
-% Updated on 18/11/2024 by ETG to replace TOL with DDEC, for decidecade data,
-% which is more accurate. Function now works within DUNA. 
+% Updated on 18/11/2024 by ETG to replace TOL with DDEC, for decidecade
+% data. Function now works within DUNA. 
 
 function [DDEC, BB, saveName] = cell2timetable(filePath,fileName,saveTimetable,savePath, desc)
 
