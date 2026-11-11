@@ -93,7 +93,15 @@ if isdatetime(allnoise.timestamps{1,1})
     end
 
 
-    dtvertcat=vertcat(allnoise.timestamps{:});
+    try
+        dtvertcat=vertcat(allnoise.timestamps{:});
+    catch
+        for arg = 1:length(allnoise.timestamps)
+            allnoise.timestamps{1,arg}.TimeZone='Z';
+        end
+        dtvertcat=vertcat(allnoise.timestamps{:});
+    end
+
 else
     tempdt=vertcat(allnoise.timestamps{:});
     dtvertcat = datetime(tempdt, 'ConvertFrom','datenum');
