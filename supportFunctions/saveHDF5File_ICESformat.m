@@ -21,8 +21,8 @@ function [] = saveHDF5File_ICESformat(filePath, fileName, depData, depID, Email,
 %% Load the data
 load(fullfile(filePath,fileName));
 
-stationlist=[ "12870" "12869" "12868" "12867" "12866" "12865" "12864" "12863",
-    "DKMst201" "DKMst105" "DKMst104" "DKMst103" "DKMst038" "DKMst037" "DKMst036" "DKMst035"]';
+stationlist=[ "14884" "14884" "14885" "12870" "12869" "12868" "12867" "12866" "12865" "12864" "12863";
+    "DKMst202V" "DKMst202" "DKMst202Ø" "DKMst201" "DKMst105" "DKMst104" "DKMst103" "DKMst038" "DKMst037" "DKMst036" "DKMst035"]';
 
 % Select the folder to save the file
 outputLocation = uigetdir([depData.dataPath '..\..'], 'Select Data Ouput Location');
@@ -41,7 +41,7 @@ dDT=datetime(table2array(DaTi), 'InputFormat','yyyy-MMM-dd HH:mm:ss');
         Institute='5123'  ;     %char(6)			EDMO code of the measuring institution -- Set to Aarhus University
         Contact = 'Jakob Tougaard';        %char(225)			Point of contact Contact of all future external queries/who submits/holds responsibility for submission. Set to JAT for AU.
         CountryCode = 'DK' ;       %char(4)			ISO country code
-        StationCode  = char(stationlist(find(contains(stationlist(:,2), (depID(1:8)))),1))   ;  %char(10)			Station code The station code and its associated coordinates can be found in the ICES station dictionary.
+        StationCode  = char(stationlist(ismember(stationlist(:,2), extractBefore(depID, '_')),1))   ;  %char(10)			Station code The station code and its associated coordinates can be found in the ICES station dictionary.
 
  %% MD data
         if strncmp(depData.loggerType,'SM',2)%|| strncmp(depData.loggerType, 'ST600',5) %  Wildlife Acoutics or ST600 in-situ hp
@@ -155,7 +155,7 @@ dDT=datetime(table2array(DaTi), 'InputFormat','yyyy-MMM-dd HH:mm:ss');
                 'FileInformation',IR,...
                 'Metadata',MD);
             
-            save([outputLocation ofilename '.mat'], 'ICES_data', 'DT_byMo')
+            %save([outputLocation ofilename '.mat'], 'ICES_data', 'DT_byMo')
     
             %% creates and writes data to hdf5 file (file must not exits at time of function call)
 
